@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% block title %}Assign Team 2 — Field{% endblock %}
+{% block page_title %}Team 2 (Field) — Assignment Management{% endblock %}
+{% block content %}
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-left:5px solid #7c3aed !important">
+      <div class="card-body p-3 d-flex align-items-center justify-content-between">
+        <div>
+          <div class="fw-bold" style="color:#4c1d95;font-size:.88rem">Team 2 Members</div>
+          <div style="font-size:1.8rem;font-weight:700;color:#7c3aed">{{ team2_summary|length }}</div>
+          <div style="font-size:.72rem;color:#9ca3af">field agents</div>
+        </div>
+        <button class="btn fw-semibold px-3" style="background:#7c3aed;color:#fff" data-bs-toggle="modal" data-bs-target="#addMember2Modal">
+          <i class="bi bi-plus-lg me-1"></i>Add Member
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-left:5px solid #16a34a !important">
+      <div class="card-body p-3">
+        <div class="fw-bold" style="color:#15803d;font-size:.88rem">Assigned to Team 2</div>
+        <div style="font-size:1.8rem;font-weight:700;color:#16a34a">{{ total_interested_assigned }}</div>
+        <div style="font-size:.72rem;color:#9ca3af">given to field agents</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-left:5px solid #ef4444 !important">
+      <div class="card-body p-3">
+        <div class="fw-bold" style="color:#dc2626;font-size:.88rem">Waiting Assignment</div>
+        <div style="font-size:1.8rem;font-weight:700;color:#ef4444">{{ total_interested_unassigned }}</div>
+        <div style="font-size:.72rem;color:#9ca3af">interested, not yet assigned</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Team Member Cards -->
+{% if team2_summary %}
+<div class="mb-2">
+  <span class="fw-bold" style="font-size:.73rem;letter-spacing:.08em;color:#6b7280;text-transform:uppercase">
+    <i class="bi bi-people me-1"></i>Team 2 Members
+  </span>
+</div>
+<div class="row g-3 mb-4">
+  {% for item in team2_summary %}
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm" style="border-radius:12px">
+      <div class="card-body p-3 text-center">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:#fff;margin:0 auto .5rem">
+          {{ item.user.first_name|slice:":1" }}{{ item.user.last_name|slice:":1" }}
+        </div>
+        <div class="fw-bold" style="font-size:.82rem">{{ item.user.get_full_name|default:item.user.username }}</div>
+        <div style="font-size:.68rem;color:#9ca3af">@{{ item.user.username }}</div>
+        <div class="row g-1 mt-2">
+          <div class="col-4"><div style="background:#f5f3ff;border-radius:6px;padding:.3rem .1rem"><div style="font-size:1rem;font-weight:700;color:#7c3aed">{{ item.total }}</div><div style="font-size:.58rem;color:#9ca3af">Tasks</div></div></div>
+          <div class="col-4"><div style="background:#f0fdf4;border-radius:6px;padding:.3rem .1rem"><div style="font-size:1rem;font-weight:700;color:#16a34a">{{ item.contacted }}</div><div style="font-size:.58rem;color:#9ca3af">Reached</div></div></div>
+          <div class="col-4"><div style="background:#eff6ff;border-radius:6px;padding:.3rem .1rem"><div style="font-size:1rem;font-weight:700;color:#2563eb">{{ item.confirmed }}</div><div style="font-size:.58rem;color:#9ca3af">Confirm</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- MAIN TABLE — ALL INTERESTED FARMERS -->
+<div class="card border-0 shadow-sm" style="border-radius:16px">
+  <div class="card-body p-0">
+
+    <div class="p-3" style="border-bottom:1px solid #f3f4f6">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+          <h6 class="fw-bold mb-0" style="color:#374151"><i class="bi bi-table me-2"></i>All Interested Farmers — Full Assignment Table</h6>
+          <small class="text-muted" style="font-size:.73rem">
+            Tick checkbox to assign · Untick to unassign · Assigned farmers show who they are assigned to
+          </small>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <input type="text" id="tableSearch2" class="form-control form-control-sm" placeholder="Search name, village..." style="width:200px;border-radius:8px" onkeyup="searchTable2()">
+          <select id="filterStatus2" class="form-select form-select-sm" style="width:160px;border-radius:8px" onchange="filterTable2()">
+            <option value="all">All Interested</option>
+            <option value="assigned">Assigned Only</option>
+            <option value="unassigned">Unassigned Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Assign bar -->
+      <form method="post" id="assign2Form">
+        {% csrf_token %}
+        <input type="hidden" name="farmer_ids" id="farmer_ids_input2">
+        <div class="d-flex gap-2 align-items-center flex-wrap p-3 rounded" style="background:#faf5ff;border:1px solid #d8b4fe;display:none" id="assignBar2">
+          <span class="fw-semibold" style="font-size:.83rem;color:#6d28d9"><i class="bi bi-check-square me-1"></i><span id="selectedCount2">0</span> farmers selected</span>
+          <select name="assigned_to" id="assignTo2" class="form-select form-select-sm" style="width:200px;border-radius:8px" required>
+            <option value="">— Choose Team Member —</option>
+            {% for u in team2_users %}
+            <option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>
+            {% endfor %}
+          </select>
+          <button type="button" class="btn btn-sm fw-semibold px-4" style="background:#7c3aed;color:#fff;border-radius:8px" onclick="submitAssign2()">
+            <i class="bi bi-person-check me-1"></i>Assign Selected
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" style="border-radius:8px" onclick="clearSelection2()">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive" style="max-height:600px;overflow-y:auto">
+      <table class="table table-hover align-middle mb-0" style="font-size:.82rem" id="mainTable2">
+        <thead style="position:sticky;top:0;z-index:1">
+          <tr style="background:#7c3aed">
+            <th style="color:#fff;width:40px"><input type="checkbox" id="selectAll2" onclick="toggleAll2()" title="Select all unassigned"></th>
+            <th style="color:#fff">Farmer ID</th>
+            <th style="color:#fff">Name</th>
+            <th style="color:#fff">Phone</th>
+            <th style="color:#fff">Village</th>
+            <th style="color:#fff">Crop</th>
+            <th style="color:#fff">Called By (T1)</th>
+            <th style="color:#fff">Assigned To (T2)</th>
+            <th style="color:#fff">Follow-up</th>
+            <th style="color:#fff">Decision</th>
+            <th style="color:#fff">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t1 in all_interested %}
+          {% with t2=t1.team2_followup %}
+          <tr class="farmer-row2 {% if t2 %}assigned2-row{% else %}unassigned2-row{% endif %}">
+
+            <!-- Checkbox -->
+            <td>
+              {% if t2 %}
+                <input type="checkbox" class="farmer-cb2 assigned-cb2"
+                       data-assignment-id="{{ t2.pk }}"
+                       data-farmer-name="{{ t1.farmer.name }}"
+                       data-agent-name="{{ t2.assigned_to.get_full_name|default:t2.assigned_to.username }}"
+                       checked
+                       onclick="handleUnassign2(this)"
+                       title="Untick to unassign from {{ t2.assigned_to.get_full_name|default:t2.assigned_to.username }}">
+              {% else %}
+                <input type="checkbox" class="farmer-cb2 unassigned-cb2"
+                       value="{{ t1.pk }}"
+                       onclick="updateAssignBar2()"
+                       title="Tick to assign this farmer">
+              {% endif %}
+            </td>
+
+            <td><code style="font-size:.73rem">{{ t1.farmer.farmer_id }}</code></td>
+            <td><strong>{{ t1.farmer.name }}</strong></td>
+            <td style="color:#1d4ed8">{{ t1.farmer.phone }}</td>
+            <td>{{ t1.farmer.village|default:"—" }}</td>
+            <td>{{ t1.farmer.crop|default:"—" }}</td>
+
+            <!-- Called by Team 1 -->
+            <td>
+              {% if t1.assigned_to %}
+                <span style="font-size:.78rem;color:#374151">{{ t1.assigned_to.get_full_name|default:t1.assigned_to.username }}</span>
+              {% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+
+            <!-- Assigned To Team 2 -->
+            <td>
+              {% if t2 and t2.assigned_to %}
+                <div class="d-flex align-items-center gap-2">
+                  <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;flex-shrink:0">
+                    {{ t2.assigned_to.first_name|slice:":1" }}{{ t2.assigned_to.last_name|slice:":1" }}
+                  </div>
+                  <span class="fw-semibold" style="font-size:.8rem;color:#4c1d95">{{ t2.assigned_to.get_full_name|default:t2.assigned_to.username }}</span>
+                </div>
+              {% else %}
+                <span style="color:#9ca3af;font-size:.78rem">— Not Assigned —</span>
+              {% endif %}
+            </td>
+
+            <!-- Follow-up Status -->
+            <td>
+              {% if t2 %}
+                {% if t2.followup_status == 'contacted' %}<span class="badge bg-success">Reached</span>
+                {% elif t2.followup_status == 'not_reachable' %}<span class="badge bg-danger">Not Reached</span>
+                {% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}
+              {% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+
+            <!-- Final Decision -->
+            <td>
+              {% if t2 %}
+                {% if t2.final_response == 'confirmed' %}<span class="badge" style="background:#dbeafe;color:#1d4ed8">Ready to Work</span>
+                {% elif t2.final_response == 'declined' %}<span class="badge bg-danger">Declined</span>
+                {% else %}<span class="badge bg-light text-dark border">Awaiting</span>{% endif %}
+              {% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+
+            <!-- Unassign Action -->
+            <td>
+              {% if t2 %}
+                <form method="post" action="{% url 'unassign_team2' t2.pk %}"
+                      onsubmit="return confirm('Remove {{ t1.farmer.name }} from {{ t2.assigned_to.get_full_name|default:t2.assigned_to.username }}?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm fw-semibold px-2"
+                          style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:.75rem">
+                    <i class="bi bi-person-x me-1"></i>Unassign
+                  </button>
+                </form>
+              {% else %}
+                <span style="font-size:.73rem;color:#9ca3af">—</span>
+              {% endif %}
+            </td>
+
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr><td colspan="11" class="text-center py-5 text-muted">
+            <i class="bi bi-star" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
+            No interested farmers yet. Team 1 needs to call farmers and mark them as Interested first.
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Unassign Confirm Modal -->
+<div class="modal fade" id="unassignModal2" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow" style="border-radius:16px">
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-person-x" style="font-size:2.5rem;color:#ef4444;display:block;margin-bottom:1rem"></i>
+        <h6 class="fw-bold mb-2">Unassign this Farmer?</h6>
+        <p class="text-muted mb-0" style="font-size:.85rem" id="unassignMessage2"></p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-2">
+        <button class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" onclick="reCheckBox2()">Cancel</button>
+        <form method="post" id="unassignForm2">
+          {% csrf_token %}
+          <button type="submit" class="btn fw-semibold px-4" style="background:#ef4444;color:#fff;border-radius:8px">
+            Yes, Unassign
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Team 2 Member Modal -->
+<div class="modal fade" id="addMember2Modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow" style="border-radius:16px">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" style="color:#4c1d95"><i class="bi bi-person-plus me-2"></i>Add Team 2 Member</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form method="post" action="{% url 'user_create_team2' %}">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold" style="font-size:.83rem">First Name</label>
+              <input type="text" name="first_name" class="form-control" placeholder="e.g. Rekha" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold" style="font-size:.83rem">Last Name</label>
+              <input type="text" name="last_name" class="form-control" placeholder="e.g. Verma">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.83rem">Username (for login)</label>
+              <input type="text" name="username" class="form-control" placeholder="e.g. rekha" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.83rem">Password</label>
+              <input type="password" name="password" class="form-control" placeholder="Set login password" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.83rem">Phone (optional)</label>
+              <input type="text" name="phone" class="form-control" placeholder="Mobile number">
+            </div>
+          </div>
+          <div class="mt-4">
+            <button type="submit" class="btn w-100 fw-semibold" style="background:#7c3aed;color:#fff">
+              <i class="bi bi-check-circle me-2"></i>Add to Team 2
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let lastUnchecked2 = null;
+
+function handleUnassign2(checkbox) {
+  if (!checkbox.checked) {
+    lastUnchecked2 = checkbox;
+    const assignmentId = checkbox.dataset.assignmentId;
+    const farmerName = checkbox.dataset.farmerName;
+    const agentName = checkbox.dataset.agentName;
+    document.getElementById('unassignMessage2').textContent =
+      `"${farmerName}" will be removed from ${agentName} and placed back in the unassigned pool.`;
+    document.getElementById('unassignForm2').action = `/farmers/unassign/team2/${assignmentId}/`;
+    new bootstrap.Modal(document.getElementById('unassignModal2')).show();
+  }
+}
+
+function reCheckBox2() {
+  if (lastUnchecked2) { lastUnchecked2.checked = true; lastUnchecked2 = null; }
+}
+
+function updateAssignBar2() {
+  const selected = document.querySelectorAll('.unassigned-cb2:checked');
+  const bar = document.getElementById('assignBar2');
+  if (selected.length > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('selectedCount2').textContent = selected.length;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function toggleAll2() {
+  const masterCb = document.getElementById('selectAll2');
+  document.querySelectorAll('.farmer-row2:not([style*="display: none"]) .unassigned-cb2').forEach(cb => cb.checked = masterCb.checked);
+  updateAssignBar2();
+}
+
+function clearSelection2() {
+  document.querySelectorAll('.unassigned-cb2').forEach(cb => cb.checked = false);
+  document.getElementById('selectAll2').checked = false;
+  document.getElementById('assignBar2').style.display = 'none';
+}
+
+function submitAssign2() {
+  const selected = [...document.querySelectorAll('.unassigned-cb2:checked')].map(c => c.value);
+  if (selected.length === 0) { alert('Please select at least one farmer.'); return; }
+  const assignTo = document.getElementById('assignTo2').value;
+  if (!assignTo) { alert('Please choose a team member to assign to.'); return; }
+  const formSelect = document.querySelector('select[name="assigned_to"]');
+  if (formSelect) formSelect.value = assignTo;
+  document.getElementById('farmer_ids_input2').value = selected.join(',');
+  document.getElementById('assign2Form').submit();
+}
+
+function searchTable2() {
+  const q = document.getElementById('tableSearch2').value.toLowerCase();
+  document.querySelectorAll('.farmer-row2').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function filterTable2() {
+  const val = document.getElementById('filterStatus2').value;
+  document.querySelectorAll('.farmer-row2').forEach(row => {
+    if (val === 'all') { row.style.display = ''; return; }
+    if (val === 'assigned')   { row.style.display = row.classList.contains('assigned2-row')   ? '' : 'none'; return; }
+    if (val === 'unassigned') { row.style.display = row.classList.contains('unassigned2-row') ? '' : 'none'; return; }
+  });
+}
+</script>
+{% endblock %}

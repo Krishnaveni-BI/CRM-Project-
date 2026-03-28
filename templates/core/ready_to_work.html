@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Ready to Work Farmers{% endblock %}
+{% block page_title %}✅ Ready to Work — Confirmed Farmers{% endblock %}
+{% block content %}
+
+<!-- KPI -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #2563eb; min-height:110px; display:flex; flex-direction:column; justify-content:center;">
+      <div class="stat-number" style="color:#2563eb; font-size:2rem; font-weight:700;">{{ total }}</div>
+      <small class="text-muted fw-semibold">Ready to Work</small>
+      <div style="font-size:.72rem;color:#9ca3af">confirmed farmers</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #16a34a; min-height:110px; display:flex; flex-direction:column; justify-content:center;">
+      <div class="stat-number" style="color:#16a34a; font-size:2rem; font-weight:700;">{{ unique_villages }}</div>
+      <small class="text-muted fw-semibold">Villages</small>
+      <div style="font-size:.72rem;color:#9ca3af">covered</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #d97706; min-height:110px; display:flex; flex-direction:column; justify-content:center;">
+      <div class="stat-number" style="color:#d97706; font-size:2rem; font-weight:700;">{{ unique_crops }}</div>
+      <small class="text-muted fw-semibold">Crops</small>
+      <div style="font-size:.72rem;color:#9ca3af">types</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #7c3aed; min-height:110px; display:flex; flex-direction:column; justify-content:center;">
+      <div class="stat-number" style="color:#7c3aed; font-size:2rem; font-weight:700;">{{ unique_agents }}</div>
+      <small class="text-muted fw-semibold">T2 Agents</small>
+      <div style="font-size:.72rem;color:#9ca3af">converted</div>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm" style="border-radius:16px; border-top:4px solid #2563eb !important">
+  <div class="card-body p-0">
+    <div class="p-3 d-flex justify-content-between align-items-center" style="border-bottom:1px solid #f3f4f6">
+      <h6 class="fw-bold mb-0" style="color:#1d4ed8">
+        <i class="bi bi-check-circle-fill me-2"></i>Ready to Work — Confirmed Farmers Only
+      </h6>
+      <span>
+        <small class="text-muted me-2">{{ ready_farmers|length }} farmers</small>
+        <a href="{% url 'export_csv' %}" class="btn btn-sm fw-semibold" style="background:#2563eb;color:#fff;border-radius:6px">
+          <i class="bi bi-download me-1"></i>Export CSV
+        </a>
+      </span>
+    </div>
+
+    <div class="p-3" style="border-bottom:1px solid #f3f4f6">
+      <form method="get" class="d-flex gap-2">
+        <input type="text" name="search" value="{{ search }}"
+          class="form-control form-control-sm" placeholder="Search name, phone, village..."
+          style="border-radius:8px; max-width:300px">
+        <button class="btn btn-sm fw-semibold px-3" style="background:#2563eb;color:#fff;border-radius:8px">Search</button>
+        {% if search %}
+        <a href="{% url 'ready_to_work' %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px">Clear</a>
+        {% endif %}
+      </form>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="font-size:.83rem">
+        <thead>
+          <tr style="background:#dbeafe">
+            <th style="color:#1e3a8a">#</th>
+            <th style="color:#1e3a8a">Farmer Name</th>
+            <th style="color:#1e3a8a">Phone</th>
+            <th style="color:#1e3a8a">Village</th>
+            <th style="color:#1e3a8a">District</th>
+            <th style="color:#1e3a8a">Crop</th>
+            <th style="color:#1e3a8a">Team 1 Caller</th>
+            <th style="color:#1e3a8a">Team 2 Agent</th>
+            <th style="color:#1e3a8a">Confirmed On</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t2 in ready_farmers %}
+          <tr>
+            <td class="text-muted" style="font-size:.75rem">{{ forloop.counter }}</td>
+            <td>
+              <strong style="color:#1e3a8a">{{ t2.farmer.name }}</strong><br>
+              <small class="text-muted">{{ t2.farmer.farmer_id }}</small>
+            </td>
+            <td style="color:#1d4ed8;font-weight:600">{{ t2.farmer.phone }}</td>
+            <td style="color:#1d4ed8">{{ t2.farmer.village|default:"—" }}</td>
+            <td>{{ t2.farmer.district|default:"—" }}</td>
+            <td>{{ t2.farmer.crop|default:"—" }}</td>
+            <td>
+              {% if t2.team1_assignment %}
+                {{ t2.team1_assignment.assigned_to.get_full_name|default:t2.team1_assignment.assigned_to.username }}
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ t2.assigned_to.get_full_name|default:t2.assigned_to.username }}</td>
+            <td style="font-size:.78rem;color:#6b7280">{{ t2.updated_at|date:"d M Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-5" style="color:#9ca3af">
+              <i class="bi bi-check-circle" style="font-size:2.5rem;display:block;margin-bottom:.5rem"></i>
+              No confirmed farmers yet. Team 2 needs to mark farmers as Ready to Work.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

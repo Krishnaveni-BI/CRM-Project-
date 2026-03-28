@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Follow-up — {{ farmer.name }}{% endblock %}
+{% block page_title %}Update Follow-up{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+
+    <!-- Farmer Info Card -->
+    <div class="card border-0 shadow-sm mb-4" style="border-left:5px solid #7c3aed; border-radius:12px;">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3">
+          <div style="width:52px;height:52px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#4c1d95;flex-shrink:0">
+            {{ farmer.name|slice:":1" }}
+          </div>
+          <div>
+            <h5 class="fw-bold mb-1">{{ farmer.name }}</h5>
+            <div style="font-size:.84rem;color:#4b5563">
+              <i class="bi bi-telephone me-1 text-primary"></i><strong>{{ farmer.phone }}</strong>
+              &nbsp;&nbsp;
+              <i class="bi bi-geo-alt me-1 text-success"></i>{{ farmer.village|default:"—" }}, {{ farmer.district|default:"—" }}
+            </div>
+            <div style="font-size:.84rem;color:#4b5563;margin-top:.3rem">
+              <i class="bi bi-flower1 me-1 text-warning"></i>Crop: {{ farmer.crop|default:"—" }}
+            </div>
+          </div>
+        </div>
+        {% if assignment.team1_assignment %}
+        <div class="mt-3 p-3 rounded" style="background:#f0fdf4;border:1px solid #bbf7d0;font-size:.82rem">
+          <i class="bi bi-clock-history me-1 text-success"></i>
+          <strong>Team 1 called:</strong>
+          {{ assignment.team1_assignment.assigned_to.get_full_name|default:assignment.team1_assignment.assigned_to.username }}
+          — farmer said <span class="badge bg-success">Interested ⭐</span>
+          {% if assignment.team1_assignment.call_remarks %}
+          <div class="mt-1 text-muted"><i class="bi bi-chat-left-text me-1"></i>{{ assignment.team1_assignment.call_remarks }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Current Status -->
+    <div class="d-flex gap-2 mb-4">
+      <span class="badge fs-6 px-3 py-2 {% if assignment.followup_status == 'contacted' %}bg-success{% elif assignment.followup_status == 'not_reachable' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+        Current: {{ assignment.get_followup_status_display }}
+      </span>
+      {% if assignment.final_response != 'awaiting' %}
+      <span class="badge fs-6 px-3 py-2 {% if assignment.final_response == 'confirmed' %}bg-primary{% elif assignment.final_response == 'declined' %}bg-danger{% else %}bg-secondary{% endif %}">
+        Decision: {{ assignment.get_final_response_display }}
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- ── STEP 1: Did you reach the farmer? ── -->
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:12px; border-top:4px solid #16a34a !important">
+      <div class="card-body p-4">
+        <h6 class="fw-bold mb-3" style="color:#15803d"><i class="bi bi-telephone-fill me-2"></i>Step 1 — Did you reach the farmer?</h6>
+        <div class="d-flex gap-3 flex-wrap">
+          <form method="post" action="{% url 'team2_quick_reached' assignment.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="followup_status" value="contacted">
+            <input type="hidden" name="next" value="update">
+            <button type="submit" class="btn fw-semibold px-4"
+              style="background:{% if assignment.followup_status == 'contacted' %}#16a34a{% else %}#f0fdf4{% endif %};
+                     color:{% if assignment.followup_status == 'contacted' %}#fff{% else %}#15803d{% endif %};
+                     border:2px solid #16a34a; border-radius:8px; font-size:.9rem">
+              ✅ Yes — Reached
+            </button>
+          </form>
+          <button type="button" class="btn fw-semibold px-4"
+            onclick="toggleNotReached()"
+            style="background:{% if assignment.followup_status == 'not_reachable' %}#dc2626{% else %}#fff5f5{% endif %};
+                   color:{% if assignment.followup_status == 'not_reachable' %}#fff{% else %}#dc2626{% endif %};
+                   border:2px solid #dc2626; border-radius:8px; font-size:.9rem">
+            ❌ No — Not Reached
+          </button>
+        </div>
+
+        <!-- Not Reached reason form (shown when clicked or already not_reachable) -->
+        <div id="notReachedForm" style="display:{% if assignment.followup_status == 'not_reachable' %}block{% else %}none{% endif %}; margin-top:1rem">
+          <form method="post" action="{% url 'team2_quick_reached' assignment.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="followup_status" value="not_reachable">
+            <input type="hidden" name="next" value="update">
+            <label class="form-label fw-semibold" style="font-size:.84rem;color:#dc2626">
+              <i class="bi bi-chat-left-text me-1"></i>Reason — Why could not reach? (required)
+            </label>
+            <textarea name="followup_remarks" class="form-control mb-3" rows="3"
+              placeholder="e.g. Phone switched off, number not reachable, called 3 times no answer..."
+              style="border-color:#dc2626;border-radius:8px">{{ assignment.followup_remarks }}</textarea>
+            <button type="submit" class="btn fw-semibold px-4" style="background:#dc2626;color:#fff;border-radius:8px">
+              Save — Not Reached
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: What did the farmer decide? (only if reached) ── -->
+    {% if assignment.followup_status == 'contacted' %}
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:12px; border-top:4px solid #2563eb !important">
+      <div class="card-body p-4">
+        <h6 class="fw-bold mb-3" style="color:#1d4ed8"><i class="bi bi-flag-fill me-2"></i>Step 2 — What did the farmer decide?</h6>
+        <div class="d-flex gap-3 flex-wrap mb-3">
+          <form method="post" action="{% url 'team2_quick_decision' assignment.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="final_response" value="confirmed">
+            <input type="hidden" name="next" value="update">
+            <button type="submit" class="btn fw-semibold px-4"
+              style="background:{% if assignment.final_response == 'confirmed' %}#2563eb{% else %}#eff6ff{% endif %};
+                     color:{% if assignment.final_response == 'confirmed' %}#fff{% else %}#1d4ed8{% endif %};
+                     border:2px solid #2563eb; border-radius:8px; font-size:.9rem">
+              🟢 Ready to Work
+            </button>
+          </form>
+          <button type="button" class="btn fw-semibold px-4"
+            onclick="toggleDecline()"
+            style="background:{% if assignment.final_response == 'declined' %}#dc2626{% else %}#fff5f5{% endif %};
+                   color:{% if assignment.final_response == 'declined' %}#fff{% else %}#dc2626{% endif %};
+                   border:2px solid #dc2626; border-radius:8px; font-size:.9rem">
+            🔴 Decline
+          </button>
+        </div>
+
+        <!-- Decline reason form -->
+        <div id="declineForm" style="display:{% if assignment.final_response == 'declined' %}block{% else %}none{% endif %}">
+          <form method="post" action="{% url 'team2_quick_decision' assignment.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="final_response" value="declined">
+            <input type="hidden" name="next" value="update">
+            <label class="form-label fw-semibold" style="font-size:.84rem;color:#dc2626">
+              <i class="bi bi-chat-left-text me-1"></i>Reason — Why farmer declined?
+            </label>
+            <textarea name="followup_remarks" class="form-control mb-3" rows="3"
+              placeholder="e.g. Not interested anymore, already working with another company, no money..."
+              style="border-color:#dc2626;border-radius:8px">{{ assignment.followup_remarks }}</textarea>
+            <button type="submit" class="btn fw-semibold px-4" style="background:#dc2626;color:#fff;border-radius:8px">
+              Save — Declined
+            </button>
+          </form>
+        </div>
+
+        {% if assignment.final_response == 'confirmed' %}
+        <div class="mt-2 p-2 rounded" style="background:#dbeafe;font-size:.82rem;color:#1d4ed8">
+          <i class="bi bi-check-circle-fill me-1"></i> Farmer is confirmed as <strong>Ready to Work</strong>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <a href="{% url 'team2_dashboard' %}" class="btn btn-outline-secondary px-4" style="border-radius:8px">
+      <i class="bi bi-arrow-left me-1"></i>Back to My Farmers
+    </a>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleNotReached() {
+  const f = document.getElementById('notReachedForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function toggleDecline() {
+  const f = document.getElementById('declineForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

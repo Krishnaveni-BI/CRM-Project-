@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Confirmed Farmers{% endblock %}
+{% block page_title %}Confirmed — Ready to Work{% endblock %}
+{% block content %}
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #2563eb">
+      <div class="stat-number" style="color:#2563eb">{{ total_confirmed }}</div>
+      <small class="text-muted fw-semibold">Total Confirmed</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #16a34a">
+      <div class="stat-number" style="color:#16a34a">{{ contacted }}</div>
+      <small class="text-muted fw-semibold">Contacted</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #d97706">
+      <div class="stat-number" style="color:#d97706">{{ pending }}</div>
+      <small class="text-muted fw-semibold">Pending</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #ef4444">
+      <div class="stat-number" style="color:#ef4444">{{ declined }}</div>
+      <small class="text-muted fw-semibold">Declined</small>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmed Farmers Table -->
+<div class="card border-0 shadow-sm" style="border-radius:16px; border-top:4px solid #2563eb !important">
+  <div class="card-body p-0">
+    <div class="p-3 d-flex justify-content-between align-items-center" style="border-bottom:1px solid #f3f4f6">
+      <h6 class="fw-bold mb-0" style="color:#2563eb">
+        <i class="bi bi-check-circle-fill me-2"></i>Confirmed — Ready to Work Farmers
+      </h6>
+      <small class="text-muted">{{ confirmed_farmers|length }} farmers</small>
+    </div>
+
+    <div class="p-3" style="border-bottom:1px solid #f3f4f6">
+      <form method="get" class="d-flex gap-2">
+        <input type="text" name="search" value="{{ search }}"
+          class="form-control form-control-sm" placeholder="Search name, phone..."
+          style="border-radius:8px; max-width:300px">
+        <button class="btn btn-sm btn-green px-3" style="border-radius:8px">Search</button>
+        {% if search %}
+        <a href="{% url 'confirmed_farmers' %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px">Clear</a>
+        {% endif %}
+      </form>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="font-size:.83rem">
+        <thead>
+          <tr style="background:#dbeafe">
+            <th style="color:#1e3a8a">#</th>
+            <th style="color:#1e3a8a">Farmer Name</th>
+            <th style="color:#1e3a8a">Phone</th>
+            <th style="color:#1e3a8a">Village</th>
+            <th style="color:#1e3a8a">District</th>
+            <th style="color:#1e3a8a">Crop</th>
+            <th style="color:#1e3a8a">Team 1 Caller</th>
+            <th style="color:#1e3a8a">Team 2 Agent</th>
+            <th style="color:#1e3a8a">Response</th>
+            <th style="color:#1e3a8a">Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t2 in confirmed_farmers %}
+          <tr>
+            <td class="text-muted" style="font-size:.75rem">{{ forloop.counter }}</td>
+            <td><strong>{{ t2.farmer.name }}</strong></td>
+            <td>{{ t2.farmer.phone }}</td>
+            <td>{{ t2.farmer.village|default:"—" }}</td>
+            <td>{{ t2.farmer.district|default:"—" }}</td>
+            <td>{{ t2.farmer.crop|default:"—" }}</td>
+            <td>
+              {% if t2.team1_assignment %}
+                {{ t2.team1_assignment.assigned_to.get_full_name|default:t2.team1_assignment.assigned_to.username }}
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ t2.assigned_to.get_full_name|default:t2.assigned_to.username }}</td>
+            <td>
+              {% if t2.final_response == 'confirmed' %}
+                <span class="badge bg-primary">Confirmed</span>
+              {% elif t2.final_response == 'declined' %}
+                <span class="badge bg-danger">Declined</span>
+              {% elif t2.final_response == 'callback' %}
+                <span class="badge bg-info text-dark">Call Back</span>
+              {% else %}
+                <span class="badge bg-light text-dark border">Awaiting</span>
+              {% endif %}
+            </td>
+            <td style="font-size:.78rem;color:#6b7280">{{ t2.followup_remarks|default:"—"|truncatechars:40 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" class="text-center py-5" style="color:#9ca3af">
+              <i class="bi bi-check-circle" style="font-size:2.5rem;display:block;margin-bottom:.5rem"></i>
+              No confirmed farmers yet. Team 2 needs to contact and confirm farmers.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

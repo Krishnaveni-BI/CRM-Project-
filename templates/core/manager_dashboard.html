@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Analytics Dashboard{% endblock %}
+{% block page_title %}Analytics Dashboard{% endblock %}
+{% block content %}
+
+<!-- SECTION 1 — PIPELINE OVERVIEW -->
+<div class="mb-2 mt-1">
+  <span class="fw-bold" style="font-size:.75rem;letter-spacing:.08em;color:#6b7280;text-transform:uppercase">
+    Pipeline Overview — Farmer Flow from Upload to Ready
+  </span>
+</div>
+<div class="row g-3 mb-4">
+  {% include "core/_kpi_card.html" with value=total label="Total Farmers" sub="uploaded in system" color="#1a5c2a" %}
+  {% include "core/_kpi_card.html" with value=assigned_t1 label="Assigned to Team 1" sub="given to callers" color="#2563eb" %}
+  {% include "core/_kpi_card.html" with value=called label="Calls Made" sub="Team 1 called" color="#059669" %}
+  {% include "core/_kpi_card.html" with value=interested label="Interested" sub="said yes on call" color="#d97706" %}
+  {% include "core/_kpi_card.html" with value=assigned_t2 label="Sent to Team 2" sub="for field visit" color="#7c3aed" %}
+  {% include "core/_kpi_card.html" with value=confirmed label="Ready to Work" sub="confirmed by field" color="#16a34a" %}
+</div>
+
+<!-- SECTION 2 — FUNNEL + DONUT -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-top:4px solid #1a5c2a !important">
+      <div class="card-body p-4">
+        <div class="mb-2">
+          <div class="fw-bold" style="font-size:.9rem;color:#1a5c2a">Farmer Journey</div>
+          <div class="text-muted" style="font-size:.73rem">From Upload to Confirmed — hover bars to see values</div>
+        </div>
+        <canvas id="funnelChart" height="190"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-top:4px solid #7c3aed !important">
+      <div class="card-body p-4">
+        <div class="mb-2">
+          <div class="fw-bold" style="font-size:.9rem;color:#7c3aed">Final Outcome Breakdown</div>
+          <div class="text-muted" style="font-size:.73rem">Of Team 2 farmers — hover to see counts</div>
+        </div>
+        <canvas id="responseChart" height="180"></canvas>
+        <div class="row g-2 mt-2" style="font-size:.75rem">
+          <div class="col-6 text-center"><div style="background:#dcfce7;border-radius:8px;padding:.4rem"><strong style="color:#16a34a">{{ confirmed }}</strong><div style="color:#6b7280;font-size:.68rem">Ready to Work</div></div></div>
+          <div class="col-6 text-center"><div style="background:#fee2e2;border-radius:8px;padding:.4rem"><strong style="color:#dc2626">{{ declined }}</strong><div style="color:#6b7280;font-size:.68rem">Declined</div></div></div>
+          <div class="col-6 text-center"><div style="background:#f3f4f6;border-radius:8px;padding:.4rem"><strong style="color:#6b7280">{{ awaiting }}</strong><div style="color:#6b7280;font-size:.68rem">Awaiting</div></div></div>
+          <div class="col-6 text-center"><div style="background:#fef3c7;border-radius:8px;padding:.4rem"><strong style="color:#92400e">{{ not_reached }}</strong><div style="color:#6b7280;font-size:.68rem">Not Reached</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3 — TEAM OUTCOMES -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-top:4px solid #2563eb !important">
+      <div class="card-body p-4">
+        <div class="fw-bold mb-1" style="font-size:.88rem;color:#1e3a8a">Vikas Team (Team 1) — Call Results</div>
+        <div class="text-muted mb-3" style="font-size:.73rem">What happened during calling</div>
+        <div class="row g-2">
+          <div class="col-6"><div style="background:#f0fdf4;border-radius:10px;padding:.85rem;border-left:4px solid #16a34a"><div style="font-size:1.5rem;font-weight:700;color:#16a34a">{{ called }}</div><div style="font-size:.73rem;font-weight:600;color:#374151">Calls Done</div><div style="font-size:.67rem;color:#9ca3af">farmer answered</div></div></div>
+          <div class="col-6"><div style="background:#eff6ff;border-radius:10px;padding:.85rem;border-left:4px solid #2563eb"><div style="font-size:1.5rem;font-weight:700;color:#2563eb">{{ interested }}</div><div style="font-size:.73rem;font-weight:600;color:#374151">Said Interested</div><div style="font-size:.67rem;color:#9ca3af">want to join</div></div></div>
+          <div class="col-6"><div style="background:#fef2f2;border-radius:10px;padding:.85rem;border-left:4px solid #ef4444"><div style="font-size:1.5rem;font-weight:700;color:#ef4444">{{ not_interested }}</div><div style="font-size:.73rem;font-weight:600;color:#374151">Not Interested</div><div style="font-size:.67rem;color:#9ca3af">declined on call</div></div></div>
+          <div class="col-6"><div style="background:#fffbeb;border-radius:10px;padding:.85rem;border-left:4px solid #f59e0b"><div style="font-size:1.5rem;font-weight:700;color:#f59e0b">{{ no_response_t1 }}</div><div style="font-size:.73rem;font-weight:600;color:#374151">No Answer</div><div style="font-size:.67rem;color:#9ca3af">didn't pick up</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-top:4px solid #7c3aed !important">
+      <div class="card-body p-4">
+        <div class="fw-bold mb-1" style="font-size:.88rem;color:#5b21b6">Field Team (Team 2) — Visit Results</div>
+        <div class="text-muted mb-3" style="font-size:.73rem">What happened during field follow-up</div>
+        <div class="row g-2">
+          <div class="col-6"><div style="background:#f5f3ff;border-radius:10px;padding:.85rem;border-left:4px solid #7c3aed"><div style="font-size:1.5rem;font-weight:700;color:#7c3aed">{{ assigned_t2 }}</div><div style="font-size:.73rem;font-weight:600;color:#374151">Assigned</div><div style="font-size:.67rem;color:#9ca3af">given to Team 2</div></div></div>
+          <div class="col-6"><div style="background:#f0fdf4;border-radius:10px;padding:.85rem;border-left:4px solid #16a34a"><div style="font-size:1.5rem;font-weight:700;color:#16a34a">{{ contacted_t2 }}</div><div style="font-size:.73rem;font-weight:600;color:#374151">Reached</div><div style="font-size:.67rem;color:#9ca3af">contacted farmer</div></div></div>
+          <div class="col-6"><div style="background:#eff6ff;border-radius:10px;padding:.85rem;border-left:4px solid #2563eb"><div style="font-size:1.5rem;font-weight:700;color:#2563eb">{{ confirmed }}</div><div style="font-size:.73rem;font-weight:600;color:#374151">Ready to Work</div><div style="font-size:.67rem;color:#9ca3af">confirmed</div></div></div>
+          <div class="col-6"><div style="background:#fef2f2;border-radius:10px;padding:.85rem;border-left:4px solid #ef4444"><div style="font-size:1.5rem;font-weight:700;color:#ef4444">{{ declined }}</div><div style="font-size:.73rem;font-weight:600;color:#374151">Declined</div><div style="font-size:.67rem;color:#9ca3af">changed mind</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 4 — LEADERBOARDS -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm" style="border-radius:14px">
+      <div class="card-body p-0">
+        <div class="p-3" style="border-bottom:1px solid #f3f4f6">
+          <div class="fw-bold" style="font-size:.85rem;color:#1e3a8a"><i class="bi bi-telephone me-2"></i>Vikas Team (Team 1) — Caller Performance</div>
+          <div class="text-muted" style="font-size:.7rem">Interested farmers found per agent</div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0" style="font-size:.79rem">
+            <thead>
+              <tr style="background:#2563eb">
+                <th style="color:#fff;padding:.45rem .7rem">Agent</th>
+                <th style="color:#fff;text-align:center;padding:.45rem .7rem">Assigned</th>
+                <th style="color:#fff;text-align:center;padding:.45rem .7rem">Called</th>
+                <th style="color:#fff;text-align:center;padding:.45rem .7rem">Interested</th>
+                <th style="color:#fff;text-align:center;padding:.45rem .7rem">Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in team1_leaderboard %}
+              <tr>
+                <td class="fw-semibold" style="padding:.45rem .7rem">{{ row.assigned_to__first_name }} {{ row.assigned_to__last_name }}</td>
+                <td style="text-align:center">{{ row.total }}</td>
+                <td style="text-align:center">{{ row.called }}</td>
+                <td style="text-align:center"><span class="badge bg-success">{{ row.interested }}</span></td>
+                <td style="text-align:center">{% if row.total > 0 %}<span class="badge" style="background:#fef3c7;color:#92400e">{% widthratio row.interested row.total 100 %}%</span>{% else %}—{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted py-3">No data yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm" style="border-radius:14px">
+      <div class="card-body p-0">
+        <div class="p-3" style="border-bottom:1px solid #f3f4f6">
+          <div class="fw-bold" style="font-size:.85rem;color:#5b21b6"><i class="bi bi-people me-2"></i>Field Team (Team 2) — Confirmation Performance</div>
+          <div class="text-muted" style="font-size:.7rem">Farmers confirmed per agent</div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0" style="font-size:.79rem">
+            <thead>
+              <tr style="background:#16a34a">
+                <th style="color:#fff;padding:.45rem .7rem">Agent</th>
+                <th style="color:#fff;text-align:center;padding:.45rem .7rem">Assigned</th>
+                <th style="color:#fff;text-align:center;padding:.45rem .7rem">Reached</th>
+                <th style="color:#fff;text-align:center;padding:.45rem .7rem">Confirmed</th>
+                <th style="color:#fff;text-align:center;padding:.45rem .7rem">Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in team2_leaderboard %}
+              <tr>
+                <td class="fw-semibold" style="padding:.45rem .7rem">{{ row.assigned_to__first_name }} {{ row.assigned_to__last_name }}</td>
+                <td style="text-align:center">{{ row.total }}</td>
+                <td style="text-align:center">{{ row.contacted }}</td>
+                <td style="text-align:center"><span class="badge bg-primary">{{ row.confirmed }}</span></td>
+                <td style="text-align:center">{% if row.total > 0 %}<span class="badge" style="background:#ede9fe;color:#5b21b6">{% widthratio row.confirmed row.total 100 %}%</span>{% else %}—{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted py-3">No data yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 5 — FULL DATA TABLE -->
+<div class="card border-0 shadow-sm" style="border-radius:16px;border-top:4px solid #1a5c2a !important">
+  <div class="card-body p-0">
+    <div class="p-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-bottom:1px solid #f3f4f6">
+      <div>
+        <h6 class="fw-bold mb-0" style="color:#1a5c2a"><i class="bi bi-table me-2"></i>Complete Farmer Data — Every Record</h6>
+        <small class="text-muted" style="font-size:.73rem">All columns visible — same as CSV export</small>
+      </div>
+      <a href="{% url 'export_csv' %}" class="btn btn-sm fw-semibold" style="background:#1a5c2a;color:#fff;border-radius:6px">
+        <i class="bi bi-download me-1"></i>Download CSV
+      </a>
+    </div>
+    <form method="get" class="p-3 d-flex gap-2 flex-wrap align-items-center" style="border-bottom:1px solid #f3f4f6;background:#f9fafb">
+      <input type="text" name="search" value="{{ search }}" class="form-control form-control-sm" placeholder="Search name, phone, village..." style="border-radius:6px;max-width:240px">
+      <select name="interest" class="form-select form-select-sm" style="width:185px;border-radius:6px" onchange="this.form.submit()">
+        <option value="">All Interest Status</option>
+        <option value="interested" {% if interest_filter == 'interested' %}selected{% endif %}>Interested</option>
+        <option value="not_interested" {% if interest_filter == 'not_interested' %}selected{% endif %}>Not Interested</option>
+        <option value="no_response" {% if interest_filter == 'no_response' %}selected{% endif %}>Not Pick Call</option>
+        <option value="not_called" {% if interest_filter == 'not_called' %}selected{% endif %}>Not Called Yet</option>
+      </select>
+      <select name="response" class="form-select form-select-sm" style="width:185px;border-radius:6px" onchange="this.form.submit()">
+        <option value="">All Final Response</option>
+        <option value="confirmed" {% if response_filter == 'confirmed' %}selected{% endif %}>Ready to Work</option>
+        <option value="declined" {% if response_filter == 'declined' %}selected{% endif %}>Declined</option>
+        <option value="awaiting" {% if response_filter == 'awaiting' %}selected{% endif %}>Awaiting</option>
+      </select>
+      <button class="btn btn-sm fw-semibold px-3" style="background:#1a5c2a;color:#fff;border-radius:6px">Filter</button>
+      {% if search or interest_filter or response_filter %}
+      <a href="{% url 'manager_dashboard' %}" class="btn btn-sm btn-outline-secondary" style="border-radius:6px">Clear</a>
+      {% endif %}
+      <span class="ms-auto text-muted" style="font-size:.8rem"><strong>{{ all_farmers|length }}</strong> records</span>
+    </form>
+    <div class="table-responsive" style="max-height:520px;overflow-y:auto">
+      <table class="table table-hover align-middle mb-0" style="font-size:.79rem">
+        <thead style="position:sticky;top:0;z-index:1">
+          <tr style="background:#16a34a">
+            <th style="color:#fff">#</th><th style="color:#fff">Farmer ID</th><th style="color:#fff">Name</th>
+            <th style="color:#fff">Phone</th><th style="color:#fff">Village</th><th style="color:#fff">District</th>
+            <th style="color:#fff">Crop</th><th style="color:#fff">Team 1 Agent</th><th style="color:#fff">Call Status</th>
+            <th style="color:#fff">Interest</th><th style="color:#fff">Team 2 Agent</th><th style="color:#fff">Reached?</th><th style="color:#fff">Final Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in all_farmers %}
+          {% with t1=f.team1_assignment t2=f.team2_assignment %}
+          <tr>
+            <td class="text-muted" style="font-size:.72rem">{{ forloop.counter }}</td>
+            <td style="font-size:.72rem;color:#6b7280">{{ f.farmer_id }}</td>
+            <td><strong>{{ f.name }}</strong></td>
+            <td style="color:#1d4ed8">{{ f.phone }}</td>
+            <td>{{ f.village|default:"—" }}</td><td>{{ f.district|default:"—" }}</td><td>{{ f.crop|default:"—" }}</td>
+            <td>{% if t1 and t1.assigned_to %}{{ t1.assigned_to.get_full_name|default:t1.assigned_to.username }}{% else %}<span class="text-muted">Not assigned</span>{% endif %}</td>
+            <td>{% if t1 %}{% if t1.call_status == 'completed' %}<span class="badge bg-success">Called</span>{% elif t1.call_status == 'no_answer' %}<span class="badge bg-secondary">No Answer</span>{% elif t1.call_status == 'busy' %}<span class="badge bg-info text-dark">Busy</span>{% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            <td>{% if t1 %}{% if t1.interest_status == 'interested' %}<span class="badge" style="background:#dcfce7;color:#15803d">Interested</span>{% elif t1.interest_status == 'not_interested' %}<span class="badge" style="background:#fee2e2;color:#dc2626">Not Interested</span>{% elif t1.interest_status == 'no_response' %}<span class="badge" style="background:#fef3c7;color:#92400e">No Answer</span>{% else %}<span class="badge bg-light text-dark border">Not Called</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            <td>{% if t2 and t2.assigned_to %}{{ t2.assigned_to.get_full_name|default:t2.assigned_to.username }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            <td>{% if t2 %}{% if t2.followup_status == 'contacted' %}<span class="badge bg-success">Reached</span>{% elif t2.followup_status == 'not_reachable' %}<span class="badge bg-danger">Not Reached</span>{% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            <td>{% if t2 %}{% if t2.final_response == 'confirmed' %}<span class="badge" style="background:#dbeafe;color:#1d4ed8">Ready to Work</span>{% elif t2.final_response == 'declined' %}<span class="badge bg-danger">Declined</span>{% elif t2.final_response == 'callback' %}<span class="badge bg-info text-dark">Call Back</span>{% else %}<span class="badge bg-light text-dark border">Awaiting</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr><td colspan="13" class="text-center py-5 text-muted"><i class="bi bi-table" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>No farmers found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+new Chart(document.getElementById('funnelChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Uploaded', 'T1 Assigned', 'Calls Done', 'Interested', 'T2 Assigned', 'Ready'],
+    datasets: [{ label: 'Farmers',
+      data: [{{ total }}, {{ assigned_t1 }}, {{ called }}, {{ interested }}, {{ assigned_t2 }}, {{ confirmed }}],
+      backgroundColor: ['#1a5c2a','#2563eb','#059669','#d97706','#7c3aed','#16a34a'],
+      borderRadius: 8 }]
+  },
+  options: {
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} farmers` } } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 11 } } } }
+  }
+});
+new Chart(document.getElementById('responseChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Ready to Work', 'Declined', 'Awaiting', 'Not Reached'],
+    datasets: [{ data: [{{ confirmed }}, {{ declined }}, {{ awaiting }}, {{ not_reached }}],
+      backgroundColor: ['#16a34a','#ef4444','#94a3b8','#f59e0b'], borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: {
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} farmers` } } },
+    cutout: '65%'
+  }
+});
+</script>
+{% endblock %}

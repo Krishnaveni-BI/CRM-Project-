@@ -1,0 +1,11 @@
+farmer_id,name,phone,village,district,state,crop,land_acres
+F001,Ramesh Kumar,9876543201,Nashik,Nashik,Maharashtra,Grapes,2.5
+F002,Sunita Devi,9876543202,Pune,Pune,Maharashtra,Onion,1.8
+F003,Govind Patil,9876543203,Solapur,Solapur,Maharashtra,Soybean,3.2
+F004,Meena Kumari,9876543204,Nagpur,Nagpur,Maharashtra,Orange,2.0
+F005,Raju Yadav,9876543205,Aurangabad,Aurangabad,Maharashtra,Cotton,4.0
+F006,Laxmi Bai,9876543206,Satara,Satara,Maharashtra,Sugarcane,5.0
+F007,Shankar Reddy,9876543207,Bijapur,Bijapur,Karnataka,Jowar,2.2
+F008,Kavitha Rao,9876543208,Hubli,Dharwad,Karnataka,Wheat,1.5
+F009,Manjunath Gowda,9876543209,Mysore,Mysore,Karnataka,Ragi,1.0
+F010,Parvathi Naidu,9876543210,Guntur,Guntur,Andhra Pradesh,Chilli,3.0

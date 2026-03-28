@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Farmer CRM{% endblock %} — Bharat Intelligence</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --green-dark: #1a5c2a;
+      --green-mid:  #2e8b57;
+      --green-light:#52c97a;
+      --amber:      #f59e0b;
+      --red:        #ef4444;
+      --bg:         #f4f7f4;
+    }
+    body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; }
+    .sidebar {
+      min-height: 100vh;
+      background: var(--green-dark);
+      color: #fff;
+      width: 250px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+    }
+    .sidebar .brand {
+      padding: 1.5rem 1rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+    }
+    .sidebar .brand .logo-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: #fff;
+      text-decoration: none;
+    }
+    .sidebar .brand small { color: rgba(255,255,255,.6); font-size: .72rem; }
+    .sidebar .nav-link {
+      color: rgba(255,255,255,.8);
+      padding: .6rem 1.25rem;
+      border-radius: 6px;
+      margin: .15rem .5rem;
+      font-size: .88rem;
+      transition: background .15s;
+    }
+    .sidebar .nav-link:hover, .sidebar .nav-link.active {
+      background: rgba(255,255,255,.15);
+      color: #fff;
+    }
+    .sidebar .nav-link i { margin-right: .5rem; }
+    .sidebar .nav-section {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.4);
+      padding: 1rem 1.25rem .3rem;
+    }
+    .main-content { flex: 1; overflow-x: hidden; }
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: .75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid #e5e7eb;
+      transition: box-shadow .2s;
+    }
+    .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    .stat-card .stat-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .stat-number { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .badge-role-admin    { background: #dc2626; }
+    .badge-role-team1    { background: #2563eb; }
+    .badge-role-team2    { background: #7c3aed; }
+    .badge-role-manager  { background: #059669; }
+    .table thead th { background: var(--green-dark); color: #fff; font-weight: 600; font-size: .82rem; }
+    .table tbody tr:hover { background: #f0fdf4; }
+    .btn-green { background: var(--green-dark); color: #fff; border: none; }
+    .btn-green:hover { background: var(--green-mid); color: #fff; }
+    .funnel-bar { height: 24px; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; color: #fff; font-size: .78rem; font-weight: 600; }
+    .progress { height: 10px; }
+    .alert { border-radius: 8px; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<div class="d-flex">
+  <!-- Sidebar -->
+  <nav class="sidebar d-flex flex-column">
+    <div class="brand">
+      <a href="{% url 'dashboard_redirect' %}" class="logo-text">
+        <i class="bi bi-tree-fill me-2" style="color:var(--green-light)"></i>FarmerCRM
+      </a><br>
+      <small>Bharat Intelligence</small>
+    </div>
+
+    <div class="py-2 flex-grow-1">
+      {% if user.role == 'admin' %}
+      <div class="nav-section">Farmers</div>
+      <a href="{% url 'upload_farmers' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_farmers' %}active{% endif %}">
+        <i class="bi bi-database"></i> Farmer Database
+      </a>
+      <a href="{% url 'assign_team1' %}" class="nav-link {% if request.resolver_match.url_name == 'assign_team1' %}active{% endif %}">
+        <i class="bi bi-person-check"></i> Assign Team 1 (Callers)
+      </a>
+      <a href="{% url 'interested_farmers' %}" class="nav-link {% if request.resolver_match.url_name == 'interested_farmers' %}active{% endif %}">
+        <i class="bi bi-star-fill"></i> Interested Farmers
+      </a>
+      <a href="{% url 'assign_team2' %}" class="nav-link {% if request.resolver_match.url_name == 'assign_team2' %}active{% endif %}">
+        <i class="bi bi-arrow-right-circle"></i> Assign Team 2 (Field)
+      </a>
+      <a href="{% url 'confirmed_farmers' %}" class="nav-link {% if request.resolver_match.url_name == 'confirmed_farmers' %}active{% endif %}">
+        <i class="bi bi-check-circle-fill"></i> Confirmed Farmers
+      </a>
+      <a href="{% url 'ready_to_work' %}" class="nav-link {% if request.resolver_match.url_name == 'ready_to_work' %}active{% endif %}" style="{% if request.resolver_match.url_name == 'ready_to_work' %}{% else %}{% endif %}">
+        <i class="bi bi-person-workspace"></i> ✅ Ready to Work
+      </a>
+      <a href="{% url 'export_csv' %}" class="nav-link">
+        <i class="bi bi-file-earmark-arrow-down"></i> Export CSV
+      </a>
+      <div class="nav-section">Team & Users</div>
+      <a href="{% url 'user_list' %}" class="nav-link {% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
+        <i class="bi bi-people"></i> Manage Users
+      </a>
+      <div class="nav-section">Analytics</div>
+      <a href="{% url 'manager_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'manager_dashboard' %}active{% endif %}">
+        <i class="bi bi-bar-chart-line"></i> Full Analytics
+      </a>
+
+      {% elif user.role == 'team1' %}
+      <div class="nav-section">My Work</div>
+      <a href="{% url 'team1_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'team1_dashboard' %}active{% endif %}">
+        <i class="bi bi-telephone"></i> My Farmers
+      </a>
+
+      {% elif user.role == 'team2' %}
+      <div class="nav-section">My Work</div>
+      <a href="{% url 'team2_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'team2_dashboard' %}active{% endif %}">
+        <i class="bi bi-chat-dots"></i> Follow-ups
+      </a>
+
+      {% elif user.role == 'manager' %}
+      <div class="nav-section">Analytics</div>
+      <a href="{% url 'manager_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'manager_dashboard' %}active{% endif %}">
+        <i class="bi bi-bar-chart-line"></i> Full Dashboard
+      </a>
+      <a href="{% url 'ready_to_work' %}" class="nav-link {% if request.resolver_match.url_name == 'ready_to_work' %}active{% endif %}">
+        <i class="bi bi-person-workspace"></i> ✅ Ready to Work
+      </a>
+      {% endif %}
+    </div>
+
+    <div style="padding:.75rem 1.25rem; border-top:1px solid rgba(255,255,255,.1)">
+      <small style="color:rgba(255,255,255,.5)">Logged in as</small><br>
+      <span style="color:#fff;font-weight:600;font-size:.85rem">{{ user.get_full_name|default:user.username }}</span><br>
+      <span class="badge badge-role-{{ user.role }} mt-1" style="font-size:.7rem">{{ user.get_role_display }}</span>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <div class="topbar">
+      <h6 class="mb-0 fw-semibold text-muted">{% block page_title %}Dashboard{% endblock %}</h6>
+      <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-box-arrow-right me-1"></i>Logout
+      </a>
+    </div>
+
+    <div class="p-4">
+      {% for message in messages %}
+      <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+{% else %}
+{% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

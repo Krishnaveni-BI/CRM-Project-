@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Farmer Database{% endblock %}
+{% block page_title %}Farmer Database{% endblock %}
+{% block content %}
+
+<!-- Upload Card -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border-left:5px solid #16a34a !important">
+  <div class="card-body p-4">
+    <div class="row align-items-center g-3">
+      <div class="col-md-7">
+        <h6 class="fw-bold mb-1" style="color:#1a5c2a"><i class="bi bi-cloud-upload me-2"></i>Upload Farmers — CSV or Excel</h6>
+        <p class="text-muted mb-0" style="font-size:.82rem">
+          Upload a <strong>.csv</strong> or <strong>.xlsx</strong> file. Required columns:
+          <code>farmer_id</code>, <code>name</code>, <code>phone</code>.
+          Optional: <code>village</code>, <code>district</code>, <code>state</code>, <code>crop</code>, <code>land_acres</code>
+        </p>
+      </div>
+      <div class="col-md-5">
+        <form method="post" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+          {% csrf_token %}
+          <input type="file" name="file" accept=".csv,.xlsx,.xls"
+            class="form-control form-control-sm" style="border-radius:8px;max-width:260px" required>
+          <button type="submit" class="btn btn-sm fw-semibold px-4"
+            style="background:#16a34a;color:#fff;border-radius:8px;white-space:nowrap">
+            <i class="bi bi-upload me-1"></i>Upload
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center">
+      <div class="stat-icon mx-auto mb-2" style="background:#dcfce7"><i class="bi bi-database-fill" style="color:#16a34a"></i></div>
+      <div class="stat-number" style="color:#1a5c2a">{{ total_farmers }}</div>
+      <small class="text-muted">Total in Database</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center">
+      <div class="stat-icon mx-auto mb-2" style="background:#dbeafe"><i class="bi bi-person-check" style="color:#2563eb"></i></div>
+      <div class="stat-number" style="color:#2563eb">{{ assigned_count }}</div>
+      <small class="text-muted">Assigned to Team 1</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center">
+      <div class="stat-icon mx-auto mb-2" style="background:#fef3c7"><i class="bi bi-person-dash" style="color:#d97706"></i></div>
+      <div class="stat-number" style="color:#d97706">{{ unassigned_count }}</div>
+      <small class="text-muted">Not Assigned</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center">
+      <div class="stat-icon mx-auto mb-2" style="background:#d1fae5"><i class="bi bi-telephone-fill" style="color:#059669"></i></div>
+      <div class="stat-number" style="color:#059669">{{ interested_count }}</div>
+      <small class="text-muted">Called</small>
+    </div>
+  </div>
+</div>
+
+<!-- Database Table -->
+<div class="card border-0 shadow-sm" style="border-radius:16px">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h6 class="fw-bold mb-0" style="color:#374151">
+          <i class="bi bi-database me-2 text-success"></i>All Farmers in Database
+        </h6>
+        <small class="text-muted">{{ total_farmers }} total records</small>
+      </div>
+      <a href="{% url 'assign_team1' %}" class="btn btn-sm btn-green px-3">
+        <i class="bi bi-person-check me-1"></i>Assign to Team 1
+      </a>
+    </div>
+
+    <!-- Search -->
+    <form method="get" class="d-flex gap-2 mb-3">
+      <input type="text" name="search" value="{{ search }}"
+        class="form-control" placeholder="Search name, phone, village, crop..."
+        style="border-radius:8px;max-width:350px">
+      <button class="btn btn-green px-3" style="border-radius:8px">Search</button>
+      {% if search %}
+      <a href="{% url 'upload_farmers' %}" class="btn btn-outline-secondary px-3" style="border-radius:8px">Clear</a>
+      {% endif %}
+    </form>
+
+    <!-- Farmer Table -->
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="font-size:.83rem">
+        <thead>
+          <tr style="background:#16a34a">
+            <th style="color:#fff">#</th>
+            <th style="color:#fff">Farmer ID</th>
+            <th style="color:#fff">Name</th>
+            <th style="color:#fff">Phone</th>
+            <th style="color:#fff">Village</th>
+            <th style="color:#fff">District</th>
+            <th style="color:#fff">State</th>
+            <th style="color:#fff">Crop</th>
+            <th style="color:#fff">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for farmer in farmers %}
+          <tr>
+            <td class="text-muted" style="font-size:.75rem">{{ forloop.counter }}</td>
+            <td><code style="font-size:.75rem">{{ farmer.farmer_id }}</code></td>
+            <td><strong>{{ farmer.name }}</strong></td>
+            <td>{{ farmer.phone }}</td>
+            <td>{{ farmer.village|default:"—" }}</td>
+            <td>{{ farmer.district|default:"—" }}</td>
+            <td>{{ farmer.state|default:"—" }}</td>
+            <td>{{ farmer.crop|default:"—" }}</td>
+            <td>
+              {% if farmer.team1_assignment %}
+                {% if farmer.team1_assignment.interest_status == 'interested' %}
+                  <span class="badge bg-success">Interested</span>
+                {% elif farmer.team1_assignment.call_status == 'completed' %}
+                  <span class="badge bg-primary">Called</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Assigned</span>
+                {% endif %}
+              {% else %}
+                <span class="badge bg-light text-dark border">Not Assigned</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-5" style="color:#9ca3af">
+              <i class="bi bi-database" style="font-size:2.5rem;display:block;margin-bottom:.5rem"></i>
+              {% if search %}
+                No farmers found for "{{ search }}"
+              {% else %}
+                No farmers in database yet.<br>
+                <small>Use the Upload box above to add your CSV or Excel file.</small>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if farmers %}
+    <div class="mt-3 text-muted" style="font-size:.8rem">
+      Showing {{ farmers|length }} farmers
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

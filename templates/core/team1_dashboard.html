@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}My Calls — {{ request.user.get_full_name|default:request.user.username }}{% endblock %}
+{% block page_title %}Team 1 — Caller Dashboard{% endblock %}
+{% block content %}
+
+<!-- KPI Cards — uniform size -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #d97706;min-height:100px;display:flex;flex-direction:column;justify-content:center;padding:1rem">
+      <div style="font-size:1.8rem;font-weight:700;color:#d97706;line-height:1">{{ total }}</div>
+      <div class="fw-semibold mt-1" style="font-size:.8rem;color:#374151">Total Assigned</div>
+      <div style="font-size:.7rem;color:#9ca3af">by Vikas</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #16a34a;min-height:100px;display:flex;flex-direction:column;justify-content:center;padding:1rem">
+      <div style="font-size:1.8rem;font-weight:700;color:#16a34a;line-height:1">{{ completed }}</div>
+      <div class="fw-semibold mt-1" style="font-size:.8rem;color:#374151">Calls Done</div>
+      <div style="font-size:.7rem;color:#9ca3af">talked to farmer</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #ef4444;min-height:100px;display:flex;flex-direction:column;justify-content:center;padding:1rem">
+      <div style="font-size:1.8rem;font-weight:700;color:#ef4444;line-height:1">{{ pending }}</div>
+      <div class="fw-semibold mt-1" style="font-size:.8rem;color:#374151">Pending</div>
+      <div style="font-size:.7rem;color:#9ca3af">yet to call</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card text-center" style="border-top:4px solid #2563eb;min-height:100px;display:flex;flex-direction:column;justify-content:center;padding:1rem">
+      <div style="font-size:1.8rem;font-weight:700;color:#2563eb;line-height:1">{{ interested }}</div>
+      <div class="fw-semibold mt-1" style="font-size:.8rem;color:#374151">Interested</div>
+      <div style="font-size:.7rem;color:#9ca3af">showed interest</div>
+    </div>
+  </div>
+</div>
+
+<!-- Call Progress -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius:12px">
+  <div class="card-body p-3">
+    <div class="d-flex justify-content-between mb-1">
+      <small class="fw-semibold" style="color:#374151"><i class="bi bi-telephone-fill me-1 text-success"></i>Call Progress</small>
+      <small class="text-muted">{% if total > 0 %}{% widthratio completed total 100 %}%{% else %}0%{% endif %} done</small>
+    </div>
+    <div class="progress" style="height:10px;border-radius:6px">
+      {% if total > 0 %}<div class="progress-bar bg-success" style="width:{% widthratio completed total 100 %}%"></div>{% endif %}
+    </div>
+    <div class="d-flex justify-content-between mt-1" style="font-size:.7rem;color:#9ca3af">
+      <span>{{ completed }} done out of {{ total }}</span><span>{{ pending }} remaining</span>
+    </div>
+  </div>
+</div>
+
+<!-- Search -->
+<form method="get" class="d-flex gap-2 mb-3">
+  <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Search farmer name, phone, village..." style="border-radius:8px;max-width:350px">
+  <button class="btn fw-semibold px-4" style="background:#16a34a;color:#fff;border-radius:8px">Search</button>
+  {% if search %}<a href="{% url 'team1_dashboard' %}" class="btn btn-outline-secondary" style="border-radius:8px">Clear</a>{% endif %}
+</form>
+
+<!-- Farmer Table -->
+<div class="card border-0 shadow-sm" style="border-radius:16px;border-top:4px solid #16a34a !important">
+  <div class="card-body p-0">
+    <div class="p-3 d-flex justify-content-between align-items-center" style="border-bottom:1px solid #f3f4f6">
+      <h6 class="fw-bold mb-0" style="color:#15803d"><i class="bi bi-people me-2"></i>My Assigned Farmers — Call & Update</h6>
+      <small class="text-muted">{{ assignments|length }} farmers</small>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="font-size:.83rem">
+        <thead>
+          <tr style="background:#16a34a">
+            <th style="color:#fff">#</th><th style="color:#fff">Farmer Name</th><th style="color:#fff">Phone</th>
+            <th style="color:#fff">Village</th><th style="color:#fff">Crop</th><th style="color:#fff">Call Status</th>
+            <th style="color:#fff">Interest</th><th style="color:#fff">Update</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in assignments %}
+          <tr>
+            <td class="text-muted" style="font-size:.75rem">{{ forloop.counter }}</td>
+            <td><strong>{{ a.farmer.name }}</strong><br><small class="text-muted">{{ a.farmer.farmer_id }}</small></td>
+            <td>{{ a.farmer.phone }}</td><td>{{ a.farmer.village|default:"—" }}</td><td>{{ a.farmer.crop|default:"—" }}</td>
+            <td>
+              {% if a.call_status == "completed" %}<span class="badge bg-success">Called</span>
+              {% elif a.call_status == "no_answer" %}<span class="badge bg-secondary">No Answer</span>
+              {% elif a.call_status == "busy" %}<span class="badge bg-info text-dark">Busy</span>
+              {% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}
+            </td>
+            <td>
+              {% if a.interest_status == 'interested' %}<span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #16a34a">Interested</span>
+              {% elif a.interest_status == 'not_interested' %}<span class="badge" style="background:#fee2e2;color:#dc2626;border:1px solid #dc2626">Not Interested</span>
+              {% elif a.interest_status == 'no_response' %}<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b">No Answer</span>
+              {% else %}<span class="badge" style="background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db">Not Called</span>{% endif %}
+            </td>
+            <td><a href="{% url 'team1_update' a.pk %}" class="btn btn-sm fw-semibold px-3" style="background:#16a34a;color:#fff;border-radius:6px">Update</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="text-center py-5" style="color:#9ca3af"><i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:.5rem"></i>No farmers assigned yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

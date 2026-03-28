@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}All Farmers{% endblock %}
+{% block page_title %}All Farmers — Status View{% endblock %}
+{% block content %}
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">
+    <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Search name / village / phone...">
+  </div>
+  <div class="col-md-3">
+    <select name="t1_status" class="form-select">
+      <option value="">All Call Status</option>
+      <option value="pending" {% if t1_status == "pending" %}selected{% endif %}>Pending</option>
+      <option value="completed" {% if t1_status == "completed" %}selected{% endif %}>Completed</option>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="interest" class="form-select">
+      <option value="">All Interest</option>
+      <option value="interested" {% if interest == "interested" %}selected{% endif %}>Interested</option>
+      <option value="not_interested" {% if interest == "not_interested" %}selected{% endif %}>Not Interested</option>
+      <option value="no_response" {% if interest == "no_response" %}selected{% endif %}>No Response</option>
+    </select>
+  </div>
+  <div class="col-md-2 d-flex gap-1">
+    <button class="btn btn-green w-100">Filter</button>
+    <a href="{% url 'all_farmers' %}" class="btn btn-outline-secondary">Clear</a>
+  </div>
+</form>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-sm table-hover mb-0">
+      <thead>
+        <tr><th>#</th><th>Farmer</th><th>Phone</th><th>Village</th><th>T1 Agent</th><th>Call</th><th>Interest</th><th>T2 Agent</th><th>Follow-up</th></tr>
+      </thead>
+      <tbody>
+        {% for a in assignments %}
+        <tr>
+          <td style="font-size:.75rem" class="text-muted">{{ a.farmer.farmer_id }}</td>
+          <td><strong>{{ a.farmer.name }}</strong></td>
+          <td>{{ a.farmer.phone }}</td>
+          <td>{{ a.farmer.village|default:"—" }}</td>
+          <td>{{ a.assigned_to.get_full_name|default:a.assigned_to.username }}</td>
+          <td>
+            {% if a.call_status == "completed" %}<span class="badge bg-success">Done</span>
+            {% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}
+          </td>
+          <td>
+            {% if a.interest_status == "interested" %}<span class="badge bg-primary">Interested</span>
+            {% elif a.interest_status == "not_interested" %}<span class="badge bg-danger">No</span>
+            {% else %}<span class="badge bg-secondary">{{ a.get_interest_status_display }}</span>{% endif %}
+          </td>
+          <td>
+            {% if a.farmer.team2_assignment %}
+              {{ a.farmer.team2_assignment.assigned_to.get_full_name|default:"—" }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if a.farmer.team2_assignment %}
+              <span class="badge bg-{% if a.farmer.team2_assignment.followup_status == 'contacted' %}success{% else %}warning text-dark{% endif %}">
+                {{ a.farmer.team2_assignment.get_followup_status_display }}
+              </span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-center text-muted py-4">No farmers found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

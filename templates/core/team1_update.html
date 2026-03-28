@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Update Farmer — {{ farmer.name }}{% endblock %}
+{% block page_title %}Update Call Status{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <!-- Farmer Info Card -->
+    <div class="card border-0 shadow-sm mb-3" style="border-left:5px solid #2563eb !important; border-radius:12px;">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3">
+          <div style="width:52px;height:52px;border-radius:12px;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:#1e3a8a;flex-shrink:0">
+            {{ farmer.name|slice:":1" }}
+          </div>
+          <div class="flex-grow-1">
+            <h5 class="fw-bold mb-1">{{ farmer.name }}</h5>
+            <div class="row g-2" style="font-size:.83rem;color:#4b5563">
+              <div class="col-6"><i class="bi bi-telephone me-1 text-primary"></i><strong>{{ farmer.phone }}</strong></div>
+              <div class="col-6"><i class="bi bi-geo-alt me-1 text-success"></i>{{ farmer.village|default:"—" }}, {{ farmer.district|default:"—" }}</div>
+              <div class="col-6"><i class="bi bi-map me-1 text-warning"></i>{{ farmer.state|default:"—" }}</div>
+              <div class="col-6"><i class="bi bi-flower1 me-1 text-success"></i>{{ farmer.crop|default:"—" }} {% if farmer.land_acres %}({{ farmer.land_acres }} acres){% endif %}</div>
+            </div>
+          </div>
+          <div class="text-end" style="font-size:.75rem;color:#9ca3af">
+            ID: {{ farmer.farmer_id }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Status Badge -->
+    <div class="d-flex gap-2 mb-3">
+      <span class="badge fs-6 px-3 py-2
+        {% if assignment.call_status == 'completed' %}bg-success
+        {% elif assignment.call_status == 'pending' %}bg-warning text-dark
+        {% else %}bg-secondary{% endif %}">
+        <i class="bi bi-telephone me-1"></i>{{ assignment.get_call_status_display }}
+      </span>
+      <span class="badge fs-6 px-3 py-2
+        {% if assignment.interest_status == 'interested' %}bg-primary
+        {% elif assignment.interest_status == 'not_interested' %}bg-danger
+        {% elif assignment.interest_status == 'no_response' %}bg-secondary
+        {% else %}bg-light text-dark border{% endif %}">
+        <i class="bi bi-star me-1"></i>{{ assignment.get_interest_status_display }}
+      </span>
+      {% if assignment.updated_at %}
+      <span class="badge bg-light text-muted border ms-auto" style="font-size:.72rem">
+        Last updated: {{ assignment.updated_at|date:"d M Y, H:i" }}
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- Update Form -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <h6 class="fw-bold mb-4" style="color:#1e3a8a"><i class="bi bi-pencil-square me-2"></i>Update Call Details</h6>
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:.84rem">
+                <i class="bi bi-telephone-fill me-1 text-primary"></i>Call Status
+              </label>
+              {{ form.call_status }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:.84rem">
+                <i class="bi bi-star-fill me-1 text-warning"></i>Interest Status
+              </label>
+              {{ form.interest_status }}
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-semibold" style="font-size:.84rem">
+                <i class="bi bi-calendar me-1"></i>Date & Time of Call
+              </label>
+              {{ form.called_at }}
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.84rem">
+                <i class="bi bi-chat-left-text me-1"></i>Remarks / Notes
+              </label>
+              {{ form.call_remarks }}
+            </div>
+          </div>
+
+          <!-- Quick select buttons for interest -->
+          <div class="mt-3 p-3 rounded" style="background:#f9fafb;border:1px solid #e5e7eb">
+            <div style="font-size:.78rem;color:#6b7280;font-weight:600;margin-bottom:.5rem">QUICK SELECT — Interest Status:</div>
+            <div class="d-flex gap-2 flex-wrap">
+              <button type="button" class="btn btn-sm btn-outline-primary" onclick="setInterest('interested')">⭐ Interested</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="setInterest('not_interested')">❌ Not Interested</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setInterest('no_response')">📵 No Response</button>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary px-4 fw-semibold">
+              <i class="bi bi-check-circle me-2"></i>Save Update
+            </button>
+            <a href="{% url 'team1_dashboard' %}" class="btn btn-outline-secondary px-4">
+              <i class="bi bi-arrow-left me-1"></i>Back to My Farmers
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function setInterest(val) {
+  document.getElementById('id_interest_status').value = val;
+}
+</script>
+{% endblock %}
